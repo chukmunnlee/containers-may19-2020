@@ -38,6 +38,9 @@ spec:
          - name: nwapp-container
            image: chukmunnlee/nwapp:v1
            imagePullPolicy: IfNotPresent
+           resources:
+              requests:
+                 cpu: 100m
            env:
            - name: DB_USER
              valueFrom:
@@ -78,11 +81,27 @@ metadata:
       app: northwind
 
 spec:
-   type: NodePort
+   type: ClusterIP
    selector:
       app: nwapp-pod
    ports:
    - name: app-port
-     port: 80
+     port: 8080
      targetPort: nwapp-port
 
+---
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+   name: nwapp-hpa
+   labels:
+      app: northwind
+
+spec:
+   minReplicas: 2
+   maxReplicas: 5
+   targetCPUUtilizationPercentage: 20
+   scaleTargetRef:
+      apiVersion: apps/v1
+      kind: Deployment
+      name: nwapp-deploy
